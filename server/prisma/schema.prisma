@@ -1,0 +1,163 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Rarity {
+  common
+  semi_rare
+  rare
+  ultra_rare
+}
+
+enum TradeRequestStatus {
+  pending
+  confirmed
+  declined
+}
+
+model User {
+  id                     String    @id @default(uuid())
+  username               String    @unique
+  email                  String    @unique
+  passwordHash           String
+  avatarUrl              String?
+  bio                    String?
+  preferredTradingMethod String?
+  zipCode                String?
+  createdAt              DateTime  @default(now())
+
+  listings           Listing[]
+  favoriteCharacters Character[] @relation("FavoriteCharacters")
+
+  reviewsWritten   Review[] @relation("ReviewsWritten")
+  reviewsReceived  Review[] @relation("ReviewsReceived")
+
+  tradesFrom Trade[] @relation("TradesFrom")
+  tradesTo   Trade[] @relation("TradesTo")
+
+  likes Like[]
+
+  tradeRequestsFrom TradeRequest[] @relation("TradeRequestsFrom")
+  tradeRequestsTo   TradeRequest[] @relation("TradeRequestsTo")
+}
+
+model Character {
+  id       String    @id @default(uuid())
+  name     String    @unique
+  slug     String    @unique
+  iconUrl  String?
+  listings Listing[]
+
+  favoritedBy User[] @relation("FavoriteCharacters")
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  rating    Int
+  comment   String?
+  createdAt DateTime @default(now())
+
+  reviewer   User   @relation("ReviewsWritten", fields: [reviewerId], references: [id])
+  reviewerId String
+  reviewee   User   @relation("ReviewsReceived", fields: [revieweeId], references: [id])
+  revieweeId String
+}
+
+model Trade {
+  id          String   @id @default(uuid())
+  completedAt DateTime @default(now())
+
+  fromUser      User     @relation("TradesFrom", fields: [fromUserId], references: [id])
+  fromUserId    String
+  fromListing   Listing? @relation("TradeFromListing", fields: [fromListingId], references: [id], onDelete: SetNull)
+  fromListingId String?
+  // Snapshot of the traded item, since the original listing is deleted once a trade completes.
+  fromTitle         String
+  fromSeries        String
+  fromImageUrls     String[] @default([])
+  fromCharacterName String
+  fromCharacterSlug String
+
+  toUser      User     @relation("TradesTo", fields: [toUserId], references: [id])
+  toUserId    String
+  toListing   Listing? @relation("TradeToListing", fields: [toListingId], references: [id], onDelete: SetNull)
+  toListingId String?
+  toTitle         String
+  toSeries        String
+  toImageUrls     String[] @default([])
+  toCharacterName String
+  toCharacterSlug String
+}
+
+model Listing {
+  id                String   @id @default(uuid())
+  title             String
+  series            String
+  rarity            Rarity
+  price             Decimal? @db.Decimal(10, 2)
+  seriesIndex       Int
+  seriesTotal       Int
+  tradeWithUsername String?
+  imageUrls         String[] @default([])
+  tradingMethod     String
+  createdAt         DateTime @default(now())
+
+  seller      User      @relation(fields: [sellerId], references: [id])
+  sellerId    String
+  character   Character @relation(fields: [characterId], references: [id])
+  characterId String
+
+  tradesFrom Trade[] @relation("TradeFromListing")
+  tradesTo   Trade[] @relation("TradeToListing")
+
+  likes Like[]
+
+  tradeRequestsFrom TradeRequest[] @relation("TradeRequestFromListing")
+  tradeRequestsTo   TradeRequest[] @relation("TradeRequestToListing")
+}
+
+model TradeRequest {
+  id          String             @id @default(uuid())
+  status      TradeRequestStatus @default(pending)
+  createdAt   DateTime           @default(now())
+  respondedAt DateTime?
+
+  tradingMethod  String
+  pickupLocation String?
+  proposedDate   String?
+  proposedTimes  String[] @default([])
+
+  fromUser      User    @relation("TradeRequestsFrom", fields: [fromUserId], references: [id])
+  fromUserId    String
+  fromListing   Listing @relation("TradeRequestFromListing", fields: [fromListingId], references: [id], onDelete: Cascade)
+  fromListingId String
+
+  toUser      User    @relation("TradeRequestsTo", fields: [toUserId], references: [id])
+  toUserId    String
+  toListing   Listing @relation("TradeRequestToListing", fields: [toListingId], references: [id], onDelete: Cascade)
+  toListingId String
+}
+
+model Like {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  listing   Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  listingId String
+
+  @@unique([userId, listingId])
+}
