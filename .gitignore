@@ -8,3 +8,4 @@ server/uploads/*
 !server/uploads/.gitkeep
 server/src/generated/
 .DS_Store
+.vercel
