@@ -31,7 +31,7 @@ export default function Home() {
               clawDownSrc={versionedAsset("/images/claw_down.png")}
             />
 
-            <div className="flex items-center justify-center -ml-240">
+            <div className="flex items-center justify-center -ml-[240px]">
               <span className="text-7xl font-medium tracking-tight text-neutral-900 hover:text-[#421B1B]">
                 gotcha.
               </span>
