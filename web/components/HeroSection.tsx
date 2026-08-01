@@ -14,12 +14,12 @@ type CharacterAssets = {
 // Matches the 3x2 hero grid: first 3 entries sit over the top row, the
 // rotated/mirrored 3 sit over the bottom row.
 const CLAW_POSITIONS = [
-  "pointer-events-none absolute -top-[110px] -left-[119px] w-[355px] h-[355px]",
-  "pointer-events-none absolute -top-[110px] -left-[50px] w-[355px] h-[355px]",
-  "pointer-events-none absolute -top-[110px] -right-[178px] w-[355px] h-[355px]",
-  "pointer-events-none rotate-180 scale-x-[-1] absolute -top-[122px] -left-[116px] w-[355px] h-[355px]",
-  "pointer-events-none rotate-180 scale-x-[-1] absolute -top-[122px] -left-[50px] w-[355px] h-[355px]",
-  "pointer-events-none rotate-180 scale-x-[-1] absolute -top-[122px] -right-[182px] w-[355px] h-[355px]",
+  "pointer-events-none absolute -top-110 -left-119 w-355 h-355",
+  "pointer-events-none absolute -top-110 -left-50 w-355 h-355",
+  "pointer-events-none absolute -top-110 -right-178 w-355 h-355",
+  "pointer-events-none rotate-180 scale-x-[-1] absolute -top-122 -left-116 w-355 h-355",
+  "pointer-events-none rotate-180 scale-x-[-1] absolute -top-122 -left-50 w-355 h-355",
+  "pointer-events-none rotate-180 scale-x-[-1] absolute -top-122 -right-182 w-355 h-355",
 ];
 
 export function HeroSection({
@@ -34,7 +34,7 @@ export function HeroSection({
   const [hovered, setHovered] = useState<number | null>(null);
 
   return (
-    <div className="relative grid w-full max-w-3xl grid-cols-3 gap-x-1 gap-y-8 sm:gap-x-10">
+    <div className="relative grid w-full max-w-3xl grid-cols-3 gap-x-1 gap-y-8 sm:gap-x-10 -mr-70">
       {CLAW_POSITIONS.map((positionClassName, i) => (
         <div key={i} className={positionClassName}>
           <Image
