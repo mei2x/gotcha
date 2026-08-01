@@ -23,7 +23,7 @@ export default function Home() {
     <main className="flex flex-1 flex-col">
       <Link
         href="/browse"
-        className="flex flex-1 flex-col items-center justify-center gap-4 px-8 p-24"
+        className="flex flex-1 flex-col items-center justify-center gap-4 overflow-hidden px-8 py-24"
       >
         <HeroSection
           characters={characters}
@@ -31,7 +31,7 @@ export default function Home() {
           clawDownSrc={versionedAsset("/images/claw_down.png")}
         />
 
-        <div className="flex items-center justify-center -ml-240">
+        <div className="flex items-center justify-center">
           <span className="text-7xl font-medium tracking-tight text-neutral-900 hover:text-[#421B1B]">
             gotcha.
           </span>
