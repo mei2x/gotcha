@@ -98,8 +98,9 @@ export function ListingCard({
       )}
       <div className="flex items-start justify-between pt-5">
         <div>
-          <p className="font-medium text-neutral-900">{listing.title}</p>
-          <p className="text-xs text-neutral-500">{listing.series}</p>
+          <p className="lowercase font-medium text-neutral-900">{listing.character.name}</p>
+          <p className="lowercase text-xs text-neutral-500">{listing.title}</p>
+          <p className="lowercase text-xs text-neutral-500">{listing.series}</p>
         </div>
         <div className="flex flex-col items-end gap-3 text-right">
           {variant === "full" && (

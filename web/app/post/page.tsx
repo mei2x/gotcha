@@ -42,10 +42,7 @@ export default function PostPage() {
   }, [authLoading, user, router]);
 
   useEffect(() => {
-    fetchCharacters().then((list) => {
-      setCharacters(list);
-      if (list.length > 0) setCharacterId(list[0].id);
-    });
+    fetchCharacters().then(setCharacters);
   }, []);
 
   if (authLoading || !user) {
