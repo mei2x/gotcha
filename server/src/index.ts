@@ -13,8 +13,25 @@ import tradeRequestsRouter from "./routes/tradeRequests";
 const app = express();
 
 const WEB_ORIGIN = process.env.WEB_ORIGIN ?? "http://localhost:3000";
+const isProduction = process.env.NODE_ENV === "production";
 
-app.use(cors({ origin: WEB_ORIGIN, credentials: true }));
+app.use(
+  cors({
+    // In dev, Next.js picks a different port whenever WEB_ORIGIN's port is
+    // already taken by something else, so allow any localhost origin
+    // instead of hardcoding one. Production stays locked to WEB_ORIGIN.
+    origin: isProduction
+      ? WEB_ORIGIN
+      : (origin, callback) => {
+          if (!origin || /^http:\/\/localhost:\d+$/.test(origin)) {
+            callback(null, true);
+          } else {
+            callback(new Error("Not allowed by CORS"));
+          }
+        },
+    credentials: true,
+  })
+);
 app.use(express.json());
 app.use(cookieParser());
 app.use("/uploads", express.static(path.join(__dirname, "..", "uploads")));

@@ -5,12 +5,29 @@ import { hashPassword } from "../src/auth";
 const prisma = new PrismaClient();
 
 const CHARACTERS = [
-  { name: "Hirono", slug: "hirono", iconUrl: "/images/hirono_color.png" },
-  { name: "Labubu", slug: "labubu", iconUrl: "/images/labubu_color.png" },
-  { name: "Sonny", slug: "sonny", iconUrl: "/images/sonny_color.png" },
+  { name: "Sonny Angel", slug: "sonny", iconUrl: "/images/sonny_color.png" },
+  { name: "Smiski", slug: "smiski", iconUrl: null },
   { name: "Monchichi", slug: "monchichi", iconUrl: "/images/monchichi_color.png" },
-  { name: "Skullpanda", slug: "skullpanda", iconUrl: "/images/skullpanda_color.png" },
+  { name: "The Monsters", slug: "the-monsters", iconUrl: null },
+  { name: "Skull Panda", slug: "skullpanda", iconUrl: "/images/skullpanda_color.png" },
+  { name: "Hirono", slug: "hirono", iconUrl: "/images/hirono_color.png" },
+  { name: "Crybaby", slug: "crybaby", iconUrl: null },
+  { name: "Peach Riot", slug: "peach-riot", iconUrl: null },
+  { name: "Dime", slug: "dime", iconUrl: null },
+  { name: "Molly", slug: "molly", iconUrl: null },
+  { name: "Twinkle Twinkle", slug: "twinkle-twinkle", iconUrl: null },
   { name: "Nyota", slug: "nyota", iconUrl: "/images/nyota_color.png" },
+  { name: "Pucky", slug: "pucky", iconUrl: null },
+  { name: "Hacipupu", slug: "hacipupu", iconUrl: null },
+  { name: "Kubo", slug: "kubo", iconUrl: null },
+  { name: "Zsiga", slug: "zsiga", iconUrl: null },
+  { name: "Polar", slug: "polar", iconUrl: null },
+  { name: "Inosoul", slug: "inosoul", iconUrl: null },
+  { name: "Duckoo", slug: "duckoo", iconUrl: null },
+  { name: "1001 Moons", slug: "1001moons", iconUrl: null },
+  { name: "Disney", slug: "disney", iconUrl: null },
+  { name: "DC", slug: "dc", iconUrl: null },
+  { name: "Labubu", slug: "labubu", iconUrl: "/images/labubu_color.png" },
 ];
 
 async function main() {

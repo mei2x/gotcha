@@ -61,7 +61,7 @@ export function BrowseSidebar({
                 checked={selectedCharacters.includes(character.slug)}
                 onChange={() => onToggleCharacter(character.slug)}
               />
-              {character.name}
+              <span className="lowercase">{character.name}</span>
             </label>
           ))}
         </div>

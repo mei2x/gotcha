@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Header } from "@/components/Header";
 import { ImagePicker } from "@/components/ImagePicker";
+import { CharacterAutocomplete } from "@/components/CharacterAutocomplete";
 import { TradingMethodPicker } from "@/components/TradingMethodPicker";
 import { useAuth } from "@/components/AuthProvider";
 import { createListing } from "@/lib/authApi";
@@ -100,12 +101,21 @@ export default function PostPage() {
 
           <ImagePicker images={images} onChange={setImages} />
 
+          <div>
+            <p className="mb-1 text-xs text-neutral-400">character</p>
+            <CharacterAutocomplete
+              characters={characters}
+              value={characterId}
+              onChange={setCharacterId}
+            />
+          </div>
+
           <div className="flex items-start justify-between gap-4">
             <div className="flex flex-1 flex-col gap-2">
               <input
                 type="text"
                 required
-                placeholder="character"
+                placeholder="title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 className="border-b border-neutral-300 pb-1 font-medium text-neutral-900 outline-none placeholder:text-neutral-300"
@@ -154,21 +164,6 @@ export default function PostPage() {
                 />
               </div>
             </div>
-          </div>
-
-          <div>
-            <p className="mb-1 text-xs text-neutral-400">character</p>
-            <select
-              value={characterId}
-              onChange={(e) => setCharacterId(e.target.value)}
-              className="w-full rounded border border-neutral-300 px-2 py-1 text-sm text-neutral-900"
-            >
-              {characters.map((character) => (
-                <option key={character.id} value={character.id}>
-                  {character.name}
-                </option>
-              ))}
-            </select>
           </div>
 
           <div>
