@@ -22,21 +22,17 @@ export default function Home() {
 
   return (
     <ScrollToBrowse>
-      <main className="flex h-screen w-full flex-col items-center justify-center overflow-hidden">
+      <main className="relative flex h-screen w-full flex-col items-center justify-center overflow-hidden bg-[#fffffc]">
       <Link
         href="/browse"
         className="flex h-full w-full flex-col items-center justify-center gap-4 p-4"
       >
-        <HeroSection
-          characters={characters}
-          clawUpSrc={versionedAsset("/images/claw_up.png")}
-          clawDownSrc={versionedAsset("/images/claw_down.png")}
-        />
+        <HeroSection characters={characters} />
       </Link>
 
-      <div className="flex w-full px-8 pb-8 pl-30">
-          <span className="text-7xl font-medium tracking-tight text-neutral-900 hover:text-[#421B1B]">
-            gotcha.
+      <div className="absolute inset-0 flex w-full items-center px-8 pl-35 pointer-events-none">
+          <span className="pointer-events-auto text-7xl font-medium tracking-tight text-neutral-900 hover:text-[#421B1B]">
+            gotcha
           </span>
         </div>
     </main>

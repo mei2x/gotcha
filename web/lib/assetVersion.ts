@@ -10,3 +10,8 @@ export function versionedAsset(publicPath: string): string {
     return publicPath;
   }
 }
+
+export function publicAssetExists(publicPath: string): boolean {
+  const fullPath = path.join(process.cwd(), "public", publicPath);
+  return fs.existsSync(fullPath);
+}
