@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { CharacterPlaceholder } from "./CharacterPlaceholder";
 import { CutMark } from "./CutMark";
 import { HeartButton } from "./HeartButton";
@@ -80,28 +81,30 @@ export function ListingCard({
 
   return (
     <div className="flex flex-col">
-      {photoUrl ? (
-        <div className="relative aspect-square w-full overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-50">
-          <Image
-            src={photoUrl}
-            alt={listing.character.name}
-            fill
-            unoptimized
-            className="object-cover"
+      <Link href={`/listing/${listing.id}`}>
+        {photoUrl ? (
+          <div className="relative aspect-square w-full overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-50">
+            <Image
+              src={photoUrl}
+              alt={listing.character.name}
+              fill
+              unoptimized
+              className="object-cover"
+            />
+          </div>
+        ) : (
+          <CharacterPlaceholder
+            name={listing.character.name}
+            className="aspect-square w-full"
           />
-        </div>
-      ) : (
-        <CharacterPlaceholder
-          name={listing.character.name}
-          className="aspect-square w-full"
-        />
-      )}
+        )}
+      </Link>
       <div className="flex items-start justify-between pt-5">
-        <div>
+        <Link href={`/listing/${listing.id}`}>
           <p className="lowercase font-medium text-neutral-900">{listing.character.name}</p>
           <p className="lowercase text-xs text-neutral-500">{listing.title}</p>
           <p className="lowercase text-xs text-neutral-500">{listing.series}</p>
-        </div>
+        </Link>
         <div className="flex flex-col items-end gap-3 text-right">
           {variant === "full" && (
             <HeartButton liked={liked} disabled={pending} onToggle={handleToggle} />
@@ -131,7 +134,9 @@ export function ListingCard({
             />
             <div className="text-end">
               <p className="text-xs text-neutral-400">with</p>
-              <p className="text-m font-medium">{listing.seller.username}</p>
+              <Link href={`/u/${listing.seller.username}`} className="text-m font-medium hover:underline">
+                {listing.seller.username}
+              </Link>
             </div>
           </div>
           {user?.username !== listing.seller.username && (
@@ -165,12 +170,20 @@ export function ListingCard({
               </button>
             </div>
           ) : (
-            <button
-              onClick={() => setConfirmingDelete(true)}
-              className="text-xs text-neutral-400 hover:text-red-500"
-            >
-              delete
-            </button>
+            <div className="flex items-center justify-between">
+              <Link
+                href={`/listing/${listing.id}/edit`}
+                className="text-xs text-neutral-400 hover:text-neutral-900"
+              >
+                edit
+              </Link>
+              <button
+                onClick={() => setConfirmingDelete(true)}
+                className="text-xs text-neutral-400 hover:text-red-500"
+              >
+                delete
+              </button>
+            </div>
           )}
           {deleteError && <p className="mt-1 text-xs text-red-500">{deleteError}</p>}
         </div>

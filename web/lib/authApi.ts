@@ -75,13 +75,38 @@ export async function fetchMyTrades(): Promise<Trade[]> {
 export async function updateProfile(input: {
   bio?: string;
   preferredTradingMethod?: string;
-  zipCode?: string;
+  city?: string;
+  state?: string;
 }): Promise<Profile> {
   const res = await fetch(`${API_URL}/api/auth/profile`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     credentials: "include",
     body: JSON.stringify(input),
+  });
+  const data = await parseJsonOrThrow(res);
+  return data.profile;
+}
+
+export async function addFavoriteCharacter(
+  characterId: string,
+  color: string,
+  textColor: string
+): Promise<Profile> {
+  const res = await fetch(`${API_URL}/api/auth/favorite-characters`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ characterId, color, textColor }),
+  });
+  const data = await parseJsonOrThrow(res);
+  return data.profile;
+}
+
+export async function removeFavoriteCharacter(characterId: string): Promise<Profile> {
+  const res = await fetch(`${API_URL}/api/auth/favorite-characters/${characterId}`, {
+    method: "DELETE",
+    credentials: "include",
   });
   const data = await parseJsonOrThrow(res);
   return data.profile;
@@ -128,6 +153,7 @@ export async function fetchMyListings(): Promise<Listing[]> {
 export type NewListingInput = {
   title: string;
   series: string;
+  description: string;
   characterId: string;
   rarity: string;
   seriesIndex: string;
@@ -140,6 +166,7 @@ export async function createListing(input: NewListingInput): Promise<Listing> {
   const formData = new FormData();
   formData.append("title", input.title);
   formData.append("series", input.series);
+  formData.append("description", input.description);
   formData.append("characterId", input.characterId);
   formData.append("rarity", input.rarity);
   formData.append("seriesIndex", input.seriesIndex);
@@ -149,6 +176,28 @@ export async function createListing(input: NewListingInput): Promise<Listing> {
 
   const res = await fetch(`${API_URL}/api/listings`, {
     method: "POST",
+    credentials: "include",
+    body: formData,
+  });
+  return parseJsonOrThrow(res);
+}
+
+export type EditListingInput = Omit<NewListingInput, "images"> & { images?: File[] };
+
+export async function updateListing(id: string, input: EditListingInput): Promise<Listing> {
+  const formData = new FormData();
+  formData.append("title", input.title);
+  formData.append("series", input.series);
+  formData.append("description", input.description);
+  formData.append("characterId", input.characterId);
+  formData.append("rarity", input.rarity);
+  formData.append("seriesIndex", input.seriesIndex);
+  formData.append("seriesTotal", input.seriesTotal);
+  formData.append("tradingMethod", input.tradingMethod);
+  input.images?.forEach((file) => formData.append("images", file));
+
+  const res = await fetch(`${API_URL}/api/listings/${id}`, {
+    method: "PATCH",
     credentials: "include",
     body: formData,
   });

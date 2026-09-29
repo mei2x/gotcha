@@ -44,7 +44,7 @@ export default function MyPostsPage() {
   return (
     <div className="flex flex-1 flex-col">
       <Header characters={characters} />
-      <main className="flex-1 px-10 py-8">
+      <main className="flex-1 px-4 py-6 sm:px-10 sm:py-8">
         <div className="mb-6 flex items-center justify-between">
           <h1 className="text-sm font-medium text-neutral-900">my posts</h1>
           <Link href="/account" className="text-xs text-neutral-400 hover:text-neutral-900">
@@ -58,7 +58,7 @@ export default function MyPostsPage() {
           <p className="text-sm text-neutral-400">You haven&apos;t posted anything yet.</p>
         )}
 
-        <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-6 lg:grid-cols-4">
           {listings.map((listing) => (
             <ListingCard
               key={listing.id}

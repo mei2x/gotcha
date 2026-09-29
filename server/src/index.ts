@@ -9,6 +9,7 @@ import authRouter from "./routes/auth";
 import tradesRouter from "./routes/trades";
 import likesRouter from "./routes/likes";
 import tradeRequestsRouter from "./routes/tradeRequests";
+import usersRouter from "./routes/users";
 
 const app = express();
 
@@ -42,6 +43,7 @@ app.use("/api/auth", authRouter);
 app.use("/api/trades", tradesRouter);
 app.use("/api/likes", likesRouter);
 app.use("/api/trade-requests", tradeRequestsRouter);
+app.use("/api/users", usersRouter);
 
 app.get("/api/health", (_req, res) => {
   res.json({ ok: true });

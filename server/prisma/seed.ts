@@ -30,8 +30,11 @@ const CHARACTERS = [
   { name: "Labubu", slug: "labubu", iconUrl: "/images/labubu_color.png" },
 ];
 
+const FAVORITE_COLORS = ["#F2C9E0", "#E3E6A8", "#D97D4A", "#9FC6DE", "#C9B6E4"];
+
 async function main() {
   await prisma.like.deleteMany();
+  await prisma.favoriteCharacter.deleteMany();
   await prisma.review.deleteMany();
   await prisma.trade.deleteMany();
   await prisma.listing.deleteMany();
@@ -51,10 +54,11 @@ async function main() {
       passwordHash: seedPasswordHash,
       bio: "collector since middle school. always down to trade!",
       preferredTradingMethod: "in_person",
-      zipCode: "90001",
+      city: "Los Angeles",
+      state: "CA",
       createdAt: new Date("2021-03-01"),
       favoriteCharacters: {
-        connect: characters.slice(0, 3).map((c) => ({ id: c.id })),
+        create: characters.slice(0, 3).map((c, i) => ({ characterId: c.id, color: FAVORITE_COLORS[i] })),
       },
     },
   });
@@ -65,10 +69,11 @@ async function main() {
       passwordHash: seedPasswordHash,
       bio: "always looking for house series figures",
       preferredTradingMethod: "shipping",
-      zipCode: "10012",
+      city: "New York",
+      state: "NY",
       createdAt: new Date("2022-06-15"),
       favoriteCharacters: {
-        connect: characters.slice(2, 5).map((c) => ({ id: c.id })),
+        create: characters.slice(2, 5).map((c, i) => ({ characterId: c.id, color: FAVORITE_COLORS[i] })),
       },
     },
   });

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import type { Character } from "@/lib/types";
 import type { SortOption } from "@/lib/types";
 
@@ -31,39 +32,52 @@ export function BrowseSidebar({
   onPriceMinChange: (value: string) => void;
   onPriceMaxChange: (value: string) => void;
 }) {
-  return (
-    <aside className="flex w-56 shrink-0 flex-col gap-8 text-sm">
-      <div>
-        <h3 className="mb-3 font-medium text-neutral-900">sort</h3>
-        <div className="flex flex-col gap-2">
-          {SORT_OPTIONS.map((option) => (
-            <label key={option.value} className="flex items-center gap-2 text-neutral-600">
-              <input
-                type="radio"
-                name="sort"
-                checked={sort === option.value}
-                onChange={() => onSortChange(option.value)}
-              />
-              {option.label}
-            </label>
-          ))}
-        </div>
-      </div>
+  const [open, setOpen] = useState(false);
 
-      <div>
-        <h3 className="mb-3 font-medium text-neutral-900">filter</h3>
-        <p className="mb-2 text-neutral-500">characters</p>
-        <div className="flex flex-col gap-2">
-          {characters.map((character) => (
-            <label key={character.id} className="flex items-center gap-2 text-neutral-600">
-              <input
-                type="checkbox"
-                checked={selectedCharacters.includes(character.slug)}
-                onChange={() => onToggleCharacter(character.slug)}
-              />
-              <span className="lowercase">{character.name}</span>
-            </label>
-          ))}
+  return (
+    <aside className="w-full shrink-0 text-sm lg:w-56">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="mb-4 flex w-full items-center justify-between rounded border border-neutral-200 px-3 py-2 text-neutral-700 lg:hidden"
+      >
+        sort & filter
+        <span>{open ? "−" : "+"}</span>
+      </button>
+
+      <div className={`${open ? "flex" : "hidden"} flex-col gap-8 lg:flex`}>
+        <div>
+          <h3 className="mb-3 font-medium text-neutral-900">sort</h3>
+          <div className="flex flex-col gap-2">
+            {SORT_OPTIONS.map((option) => (
+              <label key={option.value} className="flex items-center gap-2 text-neutral-600">
+                <input
+                  type="radio"
+                  name="sort"
+                  checked={sort === option.value}
+                  onChange={() => onSortChange(option.value)}
+                />
+                {option.label}
+              </label>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <h3 className="mb-3 font-medium text-neutral-900">filter</h3>
+          <p className="mb-2 text-neutral-500">characters</p>
+          <div className="flex flex-col gap-2">
+            {characters.map((character) => (
+              <label key={character.id} className="flex items-center gap-2 text-neutral-600">
+                <input
+                  type="checkbox"
+                  checked={selectedCharacters.includes(character.slug)}
+                  onChange={() => onToggleCharacter(character.slug)}
+                />
+                <span className="lowercase">{character.name}</span>
+              </label>
+            ))}
+          </div>
         </div>
       </div>
 

@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
 import { Header } from "@/components/Header";
 import { StarRating } from "@/components/StarRating";
 import { TradeHistoryRow } from "@/components/TradeHistoryRow";
@@ -11,11 +10,22 @@ import { ListingCard } from "@/components/ListingCard";
 import { AvatarUpload } from "@/components/AvatarUpload";
 import { BioEditor } from "@/components/BioEditor";
 import { TradingMethodPicker } from "@/components/TradingMethodPicker";
-import { ZipCodeEditor } from "@/components/ZipCodeEditor";
+import { LocationEditor } from "@/components/LocationEditor";
+import { AddFavoriteCharacterModal } from "@/components/AddFavoriteCharacterModal";
+import { FavoriteCharacterBox } from "@/components/FavoriteCharacterBox";
 import { useAuth } from "@/components/AuthProvider";
-import { fetchProfile, fetchMyTrades, fetchMyListings, updateProfile } from "@/lib/authApi";
+import {
+  fetchProfile,
+  fetchMyTrades,
+  fetchMyListings,
+  updateProfile,
+  addFavoriteCharacter,
+  removeFavoriteCharacter,
+} from "@/lib/authApi";
 import { fetchCharacters } from "@/lib/api";
 import type { Character, Listing, Profile, Trade } from "@/lib/types";
+
+const MAX_FAVORITE_CHARACTERS = 8;
 
 export default function AccountPage() {
   const router = useRouter();
@@ -26,6 +36,7 @@ export default function AccountPage() {
   const [trades, setTrades] = useState<Trade[]>([]);
   const [myListings, setMyListings] = useState<Listing[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [addFavoriteOpen, setAddFavoriteOpen] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -56,9 +67,9 @@ export default function AccountPage() {
     <div className="flex flex-1 flex-col">
       <Header characters={characters} />
 
-      <div className="grid flex-1 grid-cols-1 gap-8 px-10 pb-10 pt-6 lg:grid-cols-[1fr_1.6fr]">
-        <div className="flex flex-col gap-8">
-          <section className="rounded-3xl border border-neutral-200 p-6">
+      <div className="grid flex-1 grid-cols-1 gap-6 px-4 pb-6 pt-4 sm:px-8 sm:pb-8 lg:grid-cols-[1fr_1.6fr] lg:gap-8 lg:px-10 lg:pb-10 lg:pt-6">
+        <div className="order-2 flex flex-col gap-6 sm:gap-8 lg:order-none">
+          <section className="rounded-3xl border border-neutral-200 p-4 sm:p-6">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-sm font-medium text-neutral-900">my posts</h2>
               <Link href="/account/posts" className="text-xs text-neutral-400 hover:text-neutral-900">
@@ -69,7 +80,7 @@ export default function AccountPage() {
             {!error && myListings.length === 0 && (
               <p className="text-sm text-neutral-400">You haven&apos;t posted anything yet.</p>
             )}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               {myListings.slice(0, 2).map((listing) => (
                 <ListingCard
                   key={listing.id}
@@ -101,25 +112,25 @@ export default function AccountPage() {
           </section>
         </div>
 
-        <section className="rounded-3xl border border-neutral-200 p-8">
+        <section className="order-1 rounded-3xl border border-neutral-200 p-4 sm:p-6 lg:order-none lg:p-8">
           {!profile ? (
             <p className="text-sm text-neutral-400">Loading…</p>
           ) : (
             <>
               <div className="flex items-start justify-between">
                 <h2 className="text-sm font-medium text-neutral-900">my account</h2>
-                <div className="flex items-start gap-4">
-                  <StarRating average={profile.rating.average} count={profile.rating.count} />
+                <div className="flex flex-col items-end gap-2">
                   <button
                     onClick={() => logout().then(() => router.push("/"))}
                     className="text-xs text-neutral-400 hover:text-neutral-900"
                   >
                     log out
                   </button>
+                  <StarRating average={profile.rating.average} count={profile.rating.count} />
                 </div>
               </div>
 
-              <div className="mt-8 grid grid-cols-1 gap-35 sm:grid-cols-[auto_1fr] pl-15 pb-5">
+              <div className="mt-8 grid grid-cols-1 gap-8 pb-5 lg:grid-cols-[auto_1fr] lg:gap-16 lg:pl-10">
                 <div className="flex flex-col items-center gap-8">
                   <div>
                     <p className="text-xl font-medium text-neutral-900 ">{profile.username}</p>
@@ -143,10 +154,10 @@ export default function AccountPage() {
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-15 p-10">
+                <div className="flex flex-col gap-8 p-4 sm:p-6 lg:gap-10 lg:p-10">
                   <div>
                     <p className="text-xs text-neutral-400">Trading since</p>
-                    <p className="text-5xl font-medium text-neutral-900">
+                    <p className="text-3xl font-medium text-neutral-900 sm:text-4xl lg:text-5xl">
                       {profile.tradingSinceYear}
                     </p>
                   </div>
@@ -160,32 +171,41 @@ export default function AccountPage() {
                         setProfile(updated);
                       }}
                     />
-                    <p className="mb-1 mt-3 text-xs text-neutral-400">zip code</p>
-                    <ZipCodeEditor
-                      initialZip={profile.zipCode}
-                      onSave={async (zip) => {
-                        const updated = await updateProfile({ zipCode: zip });
+                    <p className="mb-1 mt-3 text-xs text-neutral-400">location</p>
+                    <LocationEditor
+                      initialCity={profile.city}
+                      initialState={profile.state}
+                      onSave={async (city, state) => {
+                        const updated = await updateProfile({ city, state });
                         setProfile(updated);
                       }}
                     />
                   </div>
 
                   <div>
-                    <p className="mb-2 text-xs text-neutral-400">favorite characters</p>
-                    <div className="flex gap-2">
-                      {profile.favoriteCharacters.map((character) =>
-                        character.iconUrl ? (
-                          <Image
-                            key={character.id}
-                            src={character.iconUrl}
-                            alt={character.name}
-                            title={character.name}
-                            width={40}
-                            height={40}
-                            unoptimized
-                            className="h-10 w-10 shrink-0 object-contain"
-                          />
-                        ) : null
+                    <p className="mb-2 text-xs text-neutral-400">
+                      favorite characters ({profile.favoriteCharacters.length}/{MAX_FAVORITE_CHARACTERS})
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {profile.favoriteCharacters.map((character) => (
+                        <FavoriteCharacterBox
+                          key={character.id}
+                          character={character}
+                          onRemove={async () => {
+                            const updated = await removeFavoriteCharacter(character.id);
+                            setProfile(updated);
+                          }}
+                        />
+                      ))}
+                      {profile.favoriteCharacters.length < MAX_FAVORITE_CHARACTERS && (
+                        <button
+                          type="button"
+                          onClick={() => setAddFavoriteOpen(true)}
+                          aria-label="Add a favorite character"
+                          className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl border border-neutral-300 text-2xl text-neutral-400 transition-colors hover:border-neutral-900 hover:text-neutral-900"
+                        >
+                          +
+                        </button>
                       )}
                     </div>
                   </div>
@@ -195,6 +215,18 @@ export default function AccountPage() {
           )}
         </section>
       </div>
+
+      {addFavoriteOpen && profile && (
+        <AddFavoriteCharacterModal
+          characters={characters}
+          excludeIds={new Set(profile.favoriteCharacters.map((c) => c.id))}
+          onAdd={async (characterId, color, textColor) => {
+            const updated = await addFavoriteCharacter(characterId, color, textColor);
+            setProfile(updated);
+          }}
+          onClose={() => setAddFavoriteOpen(false)}
+        />
+      )}
     </div>
   );
 }

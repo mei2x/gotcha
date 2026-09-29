@@ -18,6 +18,7 @@ export type Listing = {
   id: string;
   title: string;
   series: string;
+  description: string | null;
   rarity: Rarity;
   price: string | null;
   seriesIndex: number;
@@ -36,9 +37,25 @@ export type SortOption = "newest" | "oldest" | "rare_to_common" | "common_to_rar
 export type Profile = User & {
   bio: string | null;
   preferredTradingMethod: string | null;
-  zipCode: string | null;
+  city: string | null;
+  state: string | null;
   tradingSinceYear: number;
-  favoriteCharacters: Character[];
+  favoriteCharacters: FavoriteCharacter[];
+  rating: { average: number | null; count: number };
+};
+
+export type FavoriteCharacter = Character & { color: string; textColor: string };
+
+export type PublicProfile = {
+  id: string;
+  username: string;
+  avatarUrl: string | null;
+  bio: string | null;
+  preferredTradingMethod: string | null;
+  city: string | null;
+  state: string | null;
+  tradingSinceYear: number;
+  favoriteCharacters: FavoriteCharacter[];
   rating: { average: number | null; count: number };
 };
 

@@ -112,8 +112,8 @@ export function TradeFlowModal({
   if (step === "confirm" && selected) {
     return (
       <Modal title="Are you sure you would like to trade?" onClose={onClose}>
-        <div className="flex items-center gap-4">
-          <div className="flex-1">
+        <div className="flex flex-col items-center gap-4 sm:flex-row">
+          <div className="w-full sm:flex-1">
             <TradeItemTile item={selected} />
           </div>
           <div className="flex flex-col items-center gap-1 text-xs text-neutral-400">
@@ -127,7 +127,7 @@ export function TradeFlowModal({
             />
             <span>trade</span>
           </div>
-          <div className="flex-1">
+          <div className="w-full sm:flex-1">
             <TradeItemTile
               item={toListing}
               topLabel={

@@ -1,4 +1,4 @@
-import type { Character, Listing, SortOption } from "./types";
+import type { Character, Listing, PublicProfile, SortOption } from "./types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 
@@ -13,6 +13,12 @@ export function resolveListingPhotoUrl(imageUrls: string[]): string | null {
   const url = imageUrls.find((u) => u.length > 0);
   if (!url) return null;
   return url.startsWith("/uploads/") ? resolveUploadUrl(url) : url;
+}
+
+export function resolveListingPhotoUrls(imageUrls: string[]): string[] {
+  return imageUrls
+    .filter((u) => u.length > 0)
+    .map((u) => (u.startsWith("/uploads/") ? resolveUploadUrl(u) : u));
 }
 
 export type ListingFilters = {
@@ -34,6 +40,26 @@ export async function fetchListings(filters: ListingFilters = {}): Promise<Listi
     credentials: "include",
   });
   if (!res.ok) throw new Error("Failed to fetch listings");
+  return res.json();
+}
+
+export async function fetchListing(id: string): Promise<Listing> {
+  const res = await fetch(`${API_URL}/api/listings/${id}`, {
+    cache: "no-store",
+    credentials: "include",
+  });
+  if (!res.ok) throw new Error("Failed to fetch listing");
+  return res.json();
+}
+
+export async function fetchUserProfile(
+  username: string
+): Promise<{ profile: PublicProfile; listings: Listing[] }> {
+  const res = await fetch(`${API_URL}/api/users/${username}`, {
+    cache: "no-store",
+    credentials: "include",
+  });
+  if (!res.ok) throw new Error("Failed to fetch profile");
   return res.json();
 }
 

@@ -22,7 +22,7 @@ function publicUser(user: { id: string; username: string; email: string; avatarU
 async function buildProfile(userId: string) {
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    include: { favoriteCharacters: true },
+    include: { favoriteCharacters: { include: { character: true } } },
   });
   if (!user) return null;
 
@@ -38,13 +38,16 @@ async function buildProfile(userId: string) {
     ...publicUser(user),
     bio: user.bio,
     preferredTradingMethod: user.preferredTradingMethod,
-    zipCode: user.zipCode,
+    city: user.city,
+    state: user.state,
     tradingSinceYear: user.createdAt.getFullYear(),
-    favoriteCharacters: user.favoriteCharacters.map((c) => ({
-      id: c.id,
-      name: c.name,
-      slug: c.slug,
-      iconUrl: c.iconUrl,
+    favoriteCharacters: user.favoriteCharacters.map((f) => ({
+      id: f.character.id,
+      name: f.character.name,
+      slug: f.character.slug,
+      iconUrl: f.character.iconUrl,
+      color: f.color,
+      textColor: f.textColor,
     })),
     rating: {
       average: ratingAgg._avg.rating,
@@ -135,12 +138,13 @@ router.get("/profile", requireAuth, async (req, res) => {
 });
 
 router.patch("/profile", requireAuth, async (req, res) => {
-  const { bio, preferredTradingMethod, zipCode } = req.body ?? {};
+  const { bio, preferredTradingMethod, city, state } = req.body ?? {};
 
   const data: {
     bio?: string;
     preferredTradingMethod?: string;
-    zipCode?: string;
+    city?: string;
+    state?: string;
   } = {};
 
   if (bio !== undefined) {
@@ -159,15 +163,87 @@ router.patch("/profile", requireAuth, async (req, res) => {
     data.preferredTradingMethod = preferredTradingMethod;
   }
 
-  if (zipCode !== undefined) {
-    if (typeof zipCode !== "string" || !/^\d{5}$/.test(zipCode)) {
-      res.status(400).json({ error: "Zip code must be exactly 5 digits" });
+  if (city !== undefined) {
+    if (typeof city !== "string" || city.trim().length === 0 || city.length > 100) {
+      res.status(400).json({ error: "City must be 1-100 characters" });
       return;
     }
-    data.zipCode = zipCode;
+    data.city = city.trim();
+  }
+
+  if (state !== undefined) {
+    if (typeof state !== "string" || !/^[A-Za-z]{2}$/.test(state)) {
+      res.status(400).json({ error: "State must be a 2-letter abbreviation" });
+      return;
+    }
+    data.state = state.toUpperCase();
   }
 
   await prisma.user.update({ where: { id: req.userId }, data });
+
+  const profile = await buildProfile(req.userId!);
+  res.json({ profile });
+});
+
+const MAX_FAVORITE_CHARACTERS = 8;
+const HEX_COLOR = /^#[0-9a-fA-F]{6}$/;
+
+router.post("/favorite-characters", requireAuth, async (req, res) => {
+  const { characterId, color, textColor } = req.body ?? {};
+
+  if (typeof characterId !== "string" || characterId.length === 0) {
+    res.status(400).json({ error: "Character is required" });
+    return;
+  }
+  if (typeof color !== "string" || !HEX_COLOR.test(color)) {
+    res.status(400).json({ error: "Color must be a valid hex color" });
+    return;
+  }
+  if (typeof textColor !== "string" || !HEX_COLOR.test(textColor)) {
+    res.status(400).json({ error: "Text color must be a valid hex color" });
+    return;
+  }
+
+  const character = await prisma.character.findUnique({ where: { id: characterId } });
+  if (!character) {
+    res.status(400).json({ error: "Unknown character" });
+    return;
+  }
+
+  const existing = await prisma.favoriteCharacter.findUnique({
+    where: { userId_characterId: { userId: req.userId!, characterId } },
+  });
+  if (existing) {
+    res.status(409).json({ error: "Already in your favorites" });
+    return;
+  }
+
+  const count = await prisma.favoriteCharacter.count({ where: { userId: req.userId! } });
+  if (count >= MAX_FAVORITE_CHARACTERS) {
+    res.status(400).json({ error: `You can only favorite up to ${MAX_FAVORITE_CHARACTERS} characters` });
+    return;
+  }
+
+  await prisma.favoriteCharacter.create({
+    data: { userId: req.userId!, characterId, color, textColor },
+  });
+
+  const profile = await buildProfile(req.userId!);
+  res.status(201).json({ profile });
+});
+
+router.delete("/favorite-characters/:characterId", requireAuth, async (req, res) => {
+  const characterId = String(req.params.characterId);
+
+  const existing = await prisma.favoriteCharacter.findUnique({
+    where: { userId_characterId: { userId: req.userId!, characterId } },
+  });
+  if (!existing) {
+    res.status(404).json({ error: "Not in your favorites" });
+    return;
+  }
+
+  await prisma.favoriteCharacter.delete({ where: { id: existing.id } });
 
   const profile = await buildProfile(req.userId!);
   res.json({ profile });

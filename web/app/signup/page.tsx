@@ -30,7 +30,7 @@ export default function SignupPage() {
   }
 
   return (
-    <main className="flex flex-1 flex-col items-center justify-center px-8 py-24">
+    <main className="flex flex-1 flex-col items-center justify-center px-4 py-12 sm:px-8 sm:py-24">
       <div className="flex w-full max-w-sm flex-col gap-8">
         <Logo />
 

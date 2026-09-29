@@ -44,7 +44,7 @@ export default function LikesPage() {
   return (
     <div className="flex flex-1 flex-col">
       <Header characters={characters} />
-      <main className="flex-1 px-8 py-8">
+      <main className="flex-1 px-4 py-6 sm:px-8 sm:py-8">
         <h1 className="mb-6 text-sm font-medium text-neutral-900">likes</h1>
         {error && <p className="text-sm text-red-500">{error}</p>}
         {!error && loading && <p className="text-sm text-neutral-400">Loading…</p>}
@@ -53,7 +53,7 @@ export default function LikesPage() {
             You haven&apos;t liked anything yet — browse listings and tap the heart.
           </p>
         )}
-        <div className="grid grid-cols-2 gap-x-8 gap-y-10 sm:grid-cols-3 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 sm:gap-x-6 lg:grid-cols-4 lg:gap-x-8 lg:gap-y-10">
           {likes.map((listing) => (
             <ListingCard key={listing.id} listing={listing} />
           ))}

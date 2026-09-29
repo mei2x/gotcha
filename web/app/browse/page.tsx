@@ -46,7 +46,7 @@ export default function BrowsePage() {
   return (
     <div className="flex flex-1 flex-col">
       <Header characters={characters} />
-      <div className="flex flex-1 gap-8 px-8 py-8">
+      <div className="flex flex-1 flex-col gap-6 px-4 py-6 sm:px-8 sm:py-8 lg:flex-row lg:gap-8">
         <BrowseSidebar
           characters={characters}
           sort={sort}
@@ -64,7 +64,7 @@ export default function BrowsePage() {
           {!error && !loading && listings.length === 0 && (
             <p className="text-sm text-neutral-400">No listings match your filters.</p>
           )}
-          <div className="grid grid-cols-2 gap-x-8 gap-y-10 sm:grid-cols-3 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 sm:gap-x-6 lg:grid-cols-4 lg:gap-x-8 lg:gap-y-10">
             {listings.map((listing) => (
               <ListingCard key={listing.id} listing={listing} />
             ))}

@@ -1,15 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
+import Image from "next/image";
 import { Header } from "@/components/Header";
 import { ImagePicker } from "@/components/ImagePicker";
 import { CharacterAutocomplete } from "@/components/CharacterAutocomplete";
 import { TradingMethodPicker } from "@/components/TradingMethodPicker";
 import { useAuth } from "@/components/AuthProvider";
-import { createListing } from "@/lib/authApi";
-import { fetchCharacters } from "@/lib/api";
-import type { Character, Rarity } from "@/lib/types";
+import { updateListing } from "@/lib/authApi";
+import { fetchCharacters, fetchListing, resolveListingPhotoUrls } from "@/lib/api";
+import type { Character, Listing, Rarity } from "@/lib/types";
 
 const RARITY_OPTIONS: { value: Rarity; label: string }[] = [
   { value: "common", label: "common" },
@@ -18,11 +19,15 @@ const RARITY_OPTIONS: { value: Rarity; label: string }[] = [
   { value: "ultra_rare", label: "ultra-rare" },
 ];
 
-export default function PostPage() {
+export default function EditListingPage() {
+  const params = useParams<{ id: string }>();
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
 
   const [characters, setCharacters] = useState<Character[]>([]);
+  const [listing, setListing] = useState<Listing | null>(null);
+  const [notFound, setNotFound] = useState(false);
+
   const [images, setImages] = useState<File[]>([]);
   const [title, setTitle] = useState("");
   const [series, setSeries] = useState("");
@@ -43,12 +48,59 @@ export default function PostPage() {
   }, [authLoading, user, router]);
 
   useEffect(() => {
-    fetchCharacters().then(setCharacters);
+    fetchCharacters().then(setCharacters).catch(() => {});
   }, []);
+
+  useEffect(() => {
+    fetchListing(params.id)
+      .then(setListing)
+      .catch(() => setNotFound(true));
+  }, [params.id]);
+
+  useEffect(() => {
+    if (!listing || characters.length === 0) return;
+    setTitle(listing.title);
+    setSeries(listing.series);
+    setDescription(listing.description ?? "");
+    setCharacterId(characters.find((c) => c.slug === listing.character.slug)?.id ?? "");
+    setRarity(listing.rarity);
+    setSeriesIndex(String(listing.seriesIndex));
+    setSeriesTotal(String(listing.seriesTotal));
+    setTradingMethod(listing.tradingMethod);
+  }, [listing, characters]);
 
   if (authLoading || !user) {
     return null;
   }
+
+  if (notFound) {
+    return (
+      <div className="flex flex-1 flex-col">
+        <Header characters={characters} />
+        <main className="flex-1 px-4 py-6 sm:px-8 sm:py-10">
+          <p className="text-sm text-red-500">This post doesn&apos;t exist.</p>
+        </main>
+      </div>
+    );
+  }
+
+  if (!listing) {
+    return (
+      <div className="flex flex-1 flex-col">
+        <Header characters={characters} />
+        <main className="flex-1 px-4 py-6 sm:px-8 sm:py-10">
+          <p className="text-sm text-neutral-400">Loading…</p>
+        </main>
+      </div>
+    );
+  }
+
+  if (listing.seller.username !== user.username) {
+    router.push(`/listing/${listing.id}`);
+    return null;
+  }
+
+  const existingPhotos = resolveListingPhotoUrls(listing.imageUrls);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -71,7 +123,7 @@ export default function PostPage() {
 
     setSubmitting(true);
     try {
-      await createListing({
+      await updateListing(listing!.id, {
         title,
         series,
         description,
@@ -82,9 +134,9 @@ export default function PostPage() {
         tradingMethod,
         images,
       });
-      router.push("/browse");
+      router.push(`/listing/${listing!.id}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Couldn't create listing");
+      setError(err instanceof Error ? err.message : "Couldn't update listing");
     } finally {
       setSubmitting(false);
     }
@@ -96,7 +148,24 @@ export default function PostPage() {
 
       <main className="flex flex-1 justify-center px-4 py-6 sm:px-8 sm:py-10">
         <form onSubmit={handleSubmit} className="flex w-full max-w-sm flex-col gap-3">
-          <h1 className="mb-2 text-lg font-medium text-neutral-900">Make a Post</h1>
+          <h1 className="mb-2 text-lg font-medium text-neutral-900">Edit Post</h1>
+
+          {existingPhotos.length > 0 && images.length === 0 && (
+            <div>
+              <p className="mb-1 text-xs text-neutral-400">current pictures</p>
+              <div className="flex flex-wrap gap-2">
+                {existingPhotos.map((src) => (
+                  <div
+                    key={src}
+                    className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg border border-neutral-200"
+                  >
+                    <Image src={src} alt="" fill unoptimized className="object-cover" />
+                  </div>
+                ))}
+              </div>
+              <p className="mt-1 text-xs text-neutral-400">add new pictures below to replace these</p>
+            </div>
+          )}
 
           <ImagePicker images={images} onChange={setImages} />
 
@@ -192,7 +261,7 @@ export default function PostPage() {
             disabled={submitting}
             className="mt-2 rounded-full border border-neutral-900 py-2 text-sm font-medium text-neutral-900 transition-colors hover:bg-neutral-900 hover:text-white disabled:opacity-50"
           >
-            {submitting ? "posting…" : "post"}
+            {submitting ? "saving…" : "save changes"}
           </button>
         </form>
       </main>

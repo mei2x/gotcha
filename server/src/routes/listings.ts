@@ -21,6 +21,7 @@ export function serializeListing(
     id: string;
     title: string;
     series: string;
+    description: string | null;
     rarity: string;
     price: unknown;
     seriesIndex: number;
@@ -38,6 +39,7 @@ export function serializeListing(
     id: listing.id,
     title: listing.title,
     series: listing.series,
+    description: listing.description,
     rarity: listing.rarity,
     price: listing.price,
     seriesIndex: listing.seriesIndex,
@@ -82,13 +84,35 @@ router.get("/", async (req, res) => {
     include: { seller: true, character: true, _count: { select: { likes: true } } },
   });
 
-  const result =
+  const sorted =
     sort === "rare_to_common" || sort === "common_to_rare"
       ? [...listings].sort((a, b) => {
           const diff = RARITY_ORDER[a.rarity] - RARITY_ORDER[b.rarity];
           return sort === "common_to_rare" ? -diff : diff;
         })
       : listings;
+
+  // Nudge listings for the viewer's favorite characters to the front of
+  // their feed, without disturbing the chosen sort within each group.
+  const favoriteCharacterIds = userId
+    ? new Set(
+        (
+          await prisma.favoriteCharacter.findMany({
+            where: { userId },
+            select: { characterId: true },
+          })
+        ).map((f) => f.characterId)
+      )
+    : new Set<string>();
+
+  const result =
+    favoriteCharacterIds.size > 0
+      ? [...sorted].sort((a, b) => {
+          const aFav = favoriteCharacterIds.has(a.characterId) ? 0 : 1;
+          const bFav = favoriteCharacterIds.has(b.characterId) ? 0 : 1;
+          return aFav - bFav;
+        })
+      : sorted;
 
   const likedListingIds = userId
     ? new Set(
@@ -116,34 +140,55 @@ router.get("/mine", requireAuth, async (req, res) => {
   res.json(listings.map((listing) => serializeListing(listing, false)));
 });
 
-router.post("/", requireAuth, uploadListingImages.array("images", 6), async (req, res) => {
-  const { title, series, characterId, seriesIndex, seriesTotal, rarity, tradingMethod } =
-    req.body ?? {};
+router.get("/:id", async (req, res) => {
+  const listingId = String(req.params.id);
+  const userId = getUserIdFromRequest(req);
+
+  const listing = await prisma.listing.findUnique({
+    where: { id: listingId },
+    include: { seller: true, character: true, _count: { select: { likes: true } } },
+  });
+  if (!listing) {
+    res.status(404).json({ error: "Listing not found" });
+    return;
+  }
+
+  const likedByMe = userId
+    ? Boolean(
+        await prisma.like.findUnique({
+          where: { userId_listingId: { userId, listingId } },
+        })
+      )
+    : false;
+
+  res.json(serializeListing(listing, likedByMe));
+});
+
+async function validateListingBody(body: Record<string, unknown>) {
+  const { title, series, description, characterId, seriesIndex, seriesTotal, rarity, tradingMethod } =
+    body ?? {};
 
   if (typeof title !== "string" || title.trim().length === 0) {
-    res.status(400).json({ error: "Brand is required" });
-    return;
+    return { error: "Brand is required" } as const;
   }
   if (typeof series !== "string" || series.trim().length === 0) {
-    res.status(400).json({ error: "Series is required" });
-    return;
+    return { error: "Series is required" } as const;
+  }
+  if (typeof description !== "string" || description.trim().length === 0) {
+    return { error: "Description is required" } as const;
   }
   if (typeof characterId !== "string" || characterId.length === 0) {
-    res.status(400).json({ error: "Character is required" });
-    return;
+    return { error: "Character is required" } as const;
   }
   const character = await prisma.character.findUnique({ where: { id: characterId } });
   if (!character) {
-    res.status(400).json({ error: "Unknown character" });
-    return;
+    return { error: "Unknown character" } as const;
   }
   if (typeof rarity !== "string" || !RARITIES.has(rarity)) {
-    res.status(400).json({ error: "Invalid rarity" });
-    return;
+    return { error: "Invalid rarity" } as const;
   }
   if (typeof tradingMethod !== "string" || !TRADING_METHODS.has(tradingMethod)) {
-    res.status(400).json({ error: "Trading method must be 'shipping' or 'in_person'" });
-    return;
+    return { error: "Trading method must be 'shipping' or 'in_person'" } as const;
   }
   const seriesIndexNum = Number(seriesIndex);
   const seriesTotalNum = Number(seriesTotal);
@@ -154,7 +199,27 @@ router.post("/", requireAuth, uploadListingImages.array("images", 6), async (req
     seriesTotalNum < 1 ||
     seriesIndexNum > seriesTotalNum
   ) {
-    res.status(400).json({ error: "Rarity fraction must be valid numbers (e.g. 15 / 23)" });
+    return { error: "Rarity fraction must be valid numbers (e.g. 15 / 23)" } as const;
+  }
+
+  return {
+    data: {
+      title: title.trim(),
+      series: series.trim(),
+      description: description.trim(),
+      rarity: rarity as Rarity,
+      seriesIndex: seriesIndexNum,
+      seriesTotal: seriesTotalNum,
+      tradingMethod,
+      characterId,
+    },
+  } as const;
+}
+
+router.post("/", requireAuth, uploadListingImages.array("images", 6), async (req, res) => {
+  const validated = await validateListingBody(req.body);
+  if ("error" in validated) {
+    res.status(400).json({ error: validated.error });
     return;
   }
 
@@ -163,20 +228,48 @@ router.post("/", requireAuth, uploadListingImages.array("images", 6), async (req
 
   const listing = await prisma.listing.create({
     data: {
-      title: title.trim(),
-      series: series.trim(),
-      rarity: rarity as Rarity,
-      seriesIndex: seriesIndexNum,
-      seriesTotal: seriesTotalNum,
-      tradingMethod,
+      ...validated.data,
       imageUrls,
       sellerId: req.userId!,
-      characterId,
     },
     include: { seller: true, character: true, _count: { select: { likes: true } } },
   });
 
   res.status(201).json(serializeListing(listing, false));
+});
+
+router.patch("/:id", requireAuth, uploadListingImages.array("images", 6), async (req, res) => {
+  const listingId = String(req.params.id);
+
+  const existing = await prisma.listing.findUnique({ where: { id: listingId } });
+  if (!existing) {
+    res.status(404).json({ error: "Listing not found" });
+    return;
+  }
+  if (existing.sellerId !== req.userId) {
+    res.status(403).json({ error: "You can only edit your own listings" });
+    return;
+  }
+
+  const validated = await validateListingBody(req.body);
+  if ("error" in validated) {
+    res.status(400).json({ error: validated.error });
+    return;
+  }
+
+  const files = (req.files as Express.Multer.File[] | undefined) ?? [];
+  const imageUrls = files.length > 0 ? files.map((file) => `/uploads/${file.filename}`) : undefined;
+
+  const listing = await prisma.listing.update({
+    where: { id: listingId },
+    data: {
+      ...validated.data,
+      ...(imageUrls ? { imageUrls } : {}),
+    },
+    include: { seller: true, character: true, _count: { select: { likes: true } } },
+  });
+
+  res.json(serializeListing(listing, false));
 });
 
 router.delete("/:id", requireAuth, async (req, res) => {

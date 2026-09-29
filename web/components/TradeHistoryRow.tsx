@@ -30,20 +30,20 @@ export function TradeHistoryRow({ trade }: { trade: Trade }) {
   return (
     <div className="flex flex-col gap-2 border-b border-neutral-200 py-4 last:border-none">
       <p className="text-xs text-neutral-400">{formatDate(trade.completedAt)}</p>
-      <div className="flex items-center gap-4">
-        <div className="flex flex-1 items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-4">
+        <div className="flex min-w-0 flex-1 items-center gap-3">
           <TradeThumbnail item={trade.mine} />
-          <div>
-            <p className="text-sm text-neutral-900">{trade.mine.character.name.toLowerCase()}</p>
-            <p className="text-xs text-neutral-400">{trade.mine.series}</p>
+          <div className="min-w-0">
+            <p className="truncate text-sm text-neutral-900">{trade.mine.character.name.toLowerCase()}</p>
+            <p className="truncate text-xs text-neutral-400">{trade.mine.series}</p>
           </div>
         </div>
         <CutMark className="h-5 w-5 shrink-0 text-neutral-300" />
-        <div className="flex flex-1 items-center gap-3">
+        <div className="flex min-w-0 flex-1 items-center gap-3">
           <TradeThumbnail item={trade.theirs} />
-          <div>
-            <p className="text-sm text-neutral-900">{trade.theirs.character.name.toLowerCase()}</p>
-            <p className="text-xs text-neutral-400">{trade.theirs.series}</p>
+          <div className="min-w-0">
+            <p className="truncate text-sm text-neutral-900">{trade.theirs.character.name.toLowerCase()}</p>
+            <p className="truncate text-xs text-neutral-400">{trade.theirs.series}</p>
           </div>
         </div>
       </div>

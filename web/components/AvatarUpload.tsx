@@ -39,7 +39,7 @@ export function AvatarUpload({
       <button
         type="button"
         onClick={() => inputRef.current?.click()}
-        className="group relative flex h-60 w-60 items-center justify-center overflow-hidden rounded-full border border-neutral-200 text-xs text-neutral-300 transition-opacity hover:opacity-80"
+        className="group relative flex h-40 w-40 items-center justify-center overflow-hidden rounded-full border border-neutral-200 text-xs text-neutral-300 transition-opacity hover:opacity-80 sm:h-52 sm:w-52 lg:h-60 lg:w-60"
       >
         {resolved ? (
           <Image src={resolved} alt="Your avatar" fill unoptimized className="object-cover" />

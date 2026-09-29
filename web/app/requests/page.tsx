@@ -65,7 +65,7 @@ export default function RequestsPage() {
   return (
     <div className="flex flex-1 flex-col">
       <Header characters={characters} />
-      <main className="flex-1 px-10 py-8">
+      <main className="flex-1 px-4 py-6 sm:px-10 sm:py-8">
         <h1 className="mb-6 text-sm font-medium text-neutral-900">trade requests</h1>
 
         {error && <p className="text-sm text-red-500">{error}</p>}
@@ -75,21 +75,21 @@ export default function RequestsPage() {
 
         <div className="flex flex-col gap-6">
           {requests.map((request) => (
-            <div key={request.id} className="rounded-2xl border border-neutral-200 p-6">
+            <div key={request.id} className="rounded-2xl border border-neutral-200 p-4 sm:p-6">
               <p className="mb-4 text-sm text-neutral-500">
                 <span className="font-medium text-neutral-900">{request.fromUser.username}</span>{" "}
                 wants to trade with you
               </p>
 
-              <div className="flex items-center gap-4">
-                <div className="flex-1">
+              <div className="flex flex-col items-center gap-4 sm:flex-row">
+                <div className="w-full sm:flex-1">
                   <TradeItemTile item={request.fromListing} topLabel={<p className="text-xs text-neutral-500">{request.fromUser.username}</p>} />
                 </div>
                 <div className="flex flex-col items-center gap-1 text-xs text-neutral-400">
                   <CutMark className="h-6 w-6 text-neutral-300" />
                   <span>trade</span>
                 </div>
-                <div className="flex-1">
+                <div className="w-full sm:flex-1">
                   <TradeItemTile item={request.toListing} topLabel={<p className="text-xs text-neutral-500">you</p>} />
                 </div>
               </div>

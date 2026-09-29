@@ -35,11 +35,12 @@ model User {
   avatarUrl              String?
   bio                    String?
   preferredTradingMethod String?
-  zipCode                String?
+  city                   String?
+  state                  String?
   createdAt              DateTime  @default(now())
 
   listings           Listing[]
-  favoriteCharacters Character[] @relation("FavoriteCharacters")
+  favoriteCharacters FavoriteCharacter[]
 
   reviewsWritten   Review[] @relation("ReviewsWritten")
   reviewsReceived  Review[] @relation("ReviewsReceived")
@@ -60,7 +61,21 @@ model Character {
   iconUrl  String?
   listings Listing[]
 
-  favoritedBy User[] @relation("FavoriteCharacters")
+  favoritedBy FavoriteCharacter[]
+}
+
+model FavoriteCharacter {
+  id        String   @id @default(uuid())
+  color     String
+  textColor String   @default("#171717")
+  createdAt DateTime @default(now())
+
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  character   Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  characterId String
+
+  @@unique([userId, characterId])
 }
 
 model Review {
@@ -105,6 +120,7 @@ model Listing {
   id                String   @id @default(uuid())
   title             String
   series            String
+  description       String?
   rarity            Rarity
   price             Decimal? @db.Decimal(10, 2)
   seriesIndex       Int
