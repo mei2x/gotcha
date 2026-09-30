@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { Header } from "@/components/Header";
 import { StarRating } from "@/components/StarRating";
 import { TradeHistoryRow } from "@/components/TradeHistoryRow";
@@ -78,7 +79,18 @@ export default function AccountPage() {
             </div>
             {error && <p className="text-sm text-red-500">{error}</p>}
             {!error && myListings.length === 0 && (
-              <p className="text-sm text-neutral-400">You haven&apos;t posted anything yet.</p>
+              <div className="flex flex-col items-center gap-3 py-6 text-center">
+                <Image
+                  src="/np.png"
+                  alt=""
+                  aria-hidden
+                  width={2360}
+                  height={1640}
+                  unoptimized
+                  className="h-auto w-40"
+                />
+                <p className="text-sm text-neutral-400">You haven&apos;t posted anything yet.</p>
+              </div>
             )}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               {myListings.slice(0, 2).map((listing) => (
