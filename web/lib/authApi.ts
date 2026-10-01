@@ -37,6 +37,15 @@ export async function login(input: { email: string; password: string }): Promise
   return data.user;
 }
 
+export async function demoLogin(): Promise<User> {
+  const res = await fetch(`${API_URL}/api/auth/demo-login`, {
+    method: "POST",
+    credentials: "include",
+  });
+  const data = await parseJsonOrThrow(res);
+  return data.user;
+}
+
 export async function logout(): Promise<void> {
   await fetch(`${API_URL}/api/auth/logout`, {
     method: "POST",

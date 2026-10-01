@@ -35,7 +35,15 @@ app.use(
 );
 app.use(express.json());
 app.use(cookieParser());
-app.use("/uploads", express.static(path.join(__dirname, "..", "uploads")));
+// Uploaded filenames are randomly generated per upload and never reused, so
+// the same URL always points at the same bytes — safe to cache forever.
+app.use(
+  "/uploads",
+  express.static(path.join(__dirname, "..", "uploads"), {
+    maxAge: "1y",
+    immutable: true,
+  })
+);
 
 app.use("/api/listings", listingsRouter);
 app.use("/api/characters", charactersRouter);

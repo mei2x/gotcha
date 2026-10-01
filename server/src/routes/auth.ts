@@ -109,6 +109,23 @@ router.post("/login", async (req, res) => {
   res.json({ user: publicUser(user) });
 });
 
+const DEMO_USERNAME = process.env.DEMO_USERNAME ?? "demo";
+
+// Lets a portfolio iframe auto-login a single, dedicated public demo
+// account — no credentials involved, and it can never log in as anyone
+// else. Treat the demo account as public: never put real data in it.
+router.post("/demo-login", async (req, res) => {
+  const user = await prisma.user.findUnique({ where: { username: DEMO_USERNAME } });
+  if (!user) {
+    res.status(404).json({ error: "Demo account isn't set up yet" });
+    return;
+  }
+
+  const token = signSession(user.id);
+  setSessionCookie(res, token);
+  res.json({ user: publicUser(user) });
+});
+
 router.post("/logout", (_req, res) => {
   clearSessionCookie(res);
   res.status(204).end();
