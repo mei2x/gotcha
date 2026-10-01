@@ -10,6 +10,7 @@ import {
   requireAuth,
 } from "../auth";
 import { uploadAvatar } from "../upload";
+import type { Rarity } from "../generated/prisma/client";
 
 const router = Router();
 
@@ -111,6 +112,60 @@ router.post("/login", async (req, res) => {
 
 const DEMO_USERNAME = process.env.DEMO_USERNAME ?? "demo";
 
+type DemoSnapshotData = {
+  bio: string | null;
+  preferredTradingMethod: string | null;
+  city: string | null;
+  state: string | null;
+  avatarUrl: string | null;
+  favoriteCharacters: { characterId: string; color: string; textColor: string }[];
+  listings: {
+    title: string;
+    series: string;
+    description: string | null;
+    rarity: string;
+    seriesIndex: number;
+    seriesTotal: number;
+    tradingMethod: string;
+    imageUrls: string[];
+    characterId: string;
+  }[];
+};
+
+// Wipes whatever the demo account currently looks like (posts, favorites,
+// likes it gave out, trade requests/trades it's part of) and replays the
+// last captured snapshot, so every /demo visitor starts from the same
+// curated state regardless of what previous visitors did.
+async function resetDemoAccount(userId: string) {
+  const snapshot = await prisma.demoSnapshot.findUnique({ where: { userId } });
+  if (!snapshot) return;
+  const data = snapshot.data as unknown as DemoSnapshotData;
+
+  await prisma.$transaction([
+    prisma.like.deleteMany({ where: { userId } }),
+    prisma.tradeRequest.deleteMany({ where: { OR: [{ fromUserId: userId }, { toUserId: userId }] } }),
+    prisma.trade.deleteMany({ where: { OR: [{ fromUserId: userId }, { toUserId: userId }] } }),
+    prisma.listing.deleteMany({ where: { sellerId: userId } }),
+    prisma.favoriteCharacter.deleteMany({ where: { userId } }),
+    prisma.user.update({
+      where: { id: userId },
+      data: {
+        bio: data.bio,
+        preferredTradingMethod: data.preferredTradingMethod,
+        city: data.city,
+        state: data.state,
+        avatarUrl: data.avatarUrl,
+      },
+    }),
+    prisma.favoriteCharacter.createMany({
+      data: data.favoriteCharacters.map((f) => ({ ...f, userId })),
+    }),
+    prisma.listing.createMany({
+      data: data.listings.map((l) => ({ ...l, sellerId: userId, rarity: l.rarity as Rarity })),
+    }),
+  ]);
+}
+
 // Lets a portfolio iframe auto-login a single, dedicated public demo
 // account — no credentials involved, and it can never log in as anyone
 // else. Treat the demo account as public: never put real data in it.
@@ -121,9 +176,74 @@ router.post("/demo-login", async (req, res) => {
     return;
   }
 
+  await resetDemoAccount(user.id);
+
   const token = signSession(user.id);
   setSessionCookie(res, token);
   res.json({ user: publicUser(user) });
+});
+
+// Captures the demo account's current state (profile, favorites, listings)
+// as the baseline that /demo-login resets back to. Deliberately NOT gated
+// by a login session — anyone visiting /demo is logged in as the demo
+// account, so a session check can't tell the owner apart from a random
+// visitor. Only someone who knows DEMO_SNAPSHOT_SECRET (set as an env var,
+// never in the browser) can call this — call it with:
+//   curl -X POST <api>/api/auth/demo-snapshot -H "x-demo-secret: <secret>"
+router.post("/demo-snapshot", async (req, res) => {
+  const secret = process.env.DEMO_SNAPSHOT_SECRET;
+  if (!secret) {
+    res.status(500).json({ error: "DEMO_SNAPSHOT_SECRET isn't configured on the server" });
+    return;
+  }
+  if (req.header("x-demo-secret") !== secret) {
+    res.status(403).json({ error: "Invalid or missing x-demo-secret header" });
+    return;
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { username: DEMO_USERNAME },
+    include: {
+      favoriteCharacters: true,
+      listings: true,
+    },
+  });
+  if (!user) {
+    res.status(404).json({ error: "Demo account isn't set up yet" });
+    return;
+  }
+
+  const data: DemoSnapshotData = {
+    bio: user.bio,
+    preferredTradingMethod: user.preferredTradingMethod,
+    city: user.city,
+    state: user.state,
+    avatarUrl: user.avatarUrl,
+    favoriteCharacters: user.favoriteCharacters.map((f) => ({
+      characterId: f.characterId,
+      color: f.color,
+      textColor: f.textColor,
+    })),
+    listings: user.listings.map((l) => ({
+      title: l.title,
+      series: l.series,
+      description: l.description,
+      rarity: l.rarity,
+      seriesIndex: l.seriesIndex,
+      seriesTotal: l.seriesTotal,
+      tradingMethod: l.tradingMethod,
+      imageUrls: l.imageUrls,
+      characterId: l.characterId,
+    })),
+  };
+
+  await prisma.demoSnapshot.upsert({
+    where: { userId: user.id },
+    create: { userId: user.id, data },
+    update: { data },
+  });
+
+  res.json({ ok: true, listingCount: data.listings.length, favoriteCount: data.favoriteCharacters.length });
 });
 
 router.post("/logout", (_req, res) => {

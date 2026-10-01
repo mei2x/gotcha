@@ -177,3 +177,13 @@ model Like {
 
   @@unique([userId, listingId])
 }
+
+// Captured once (via POST /api/auth/demo-snapshot) from the demo account's
+// live state, then replayed on every /demo visit so each visitor sees the
+// same curated showcase instead of whatever the last visitor left behind.
+model DemoSnapshot {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  data      Json
+  updatedAt DateTime @updatedAt
+}

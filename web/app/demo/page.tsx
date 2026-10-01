@@ -14,7 +14,7 @@ export default function DemoLoginPage() {
     demoLogin()
       .then((user) => {
         updateUser(user);
-        router.replace("/browse");
+        router.replace("/");
       })
       .catch((err) => setError(err instanceof Error ? err.message : "Couldn't start the demo"));
   }, [router, updateUser]);
